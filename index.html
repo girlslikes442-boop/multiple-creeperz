@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MULTIPLE CREEPER</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;font-family:Arial,sans-serif;
+ color:white;text-align:center;
+ background:radial-gradient(circle at top,#123d50,#071b25 55%,#06120f);
+}
+header{padding:28px 10px 12px}
+h1{font-size:30px;color:#66eaff;text-shadow:0 0 15px #00cfff;margin:5px}
+.sub{color:#8affb2;font-size:13px;letter-spacing:3px}
+h2{color:#75f5d0}
+button{
+ border:1px solid #5cebd0;border-radius:12px;
+ padding:13px 18px;background:linear-gradient(135deg,#087e91,#087d51);
+ color:white;font-weight:bold;font-size:15px;cursor:pointer;
+ box-shadow:0 0 12px #00d5bb55;margin:6px;
+}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.4}
+.panel{
+ margin:15px auto;padding:18px;width:92%;max-width:480px;
+ background:#0b2932dd;border:1px solid #38cdbb;
+ border-radius:18px;box-shadow:0 0 20px #00d5bb22;
+}
+.modes{display:flex;flex-wrap:wrap;justify-content:center}
+.games{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.game{
+ padding:15px 5px;background:#102f3b;border:1px solid #2b9e91;
+ border-radius:13px;color:#cffff0;font-weight:bold;
+}
+.game small{display:block;color:#7ce8d2;margin-top:5px}
+#gameArea{display:none}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:18px auto}
+.cell{
+ aspect-ratio:1;background:#123d48;border:2px solid #49d9cb;
+ border-radius:13px;font-size:42px;color:#8affd0;
+ display:flex;align-items:center;justify-content:center;
+}
+#status{font-size:18px;color:#83f5d2;min-height:28px}
+footer{padding:25px;color:#70a9a5;font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="sub">WELCOME TO</div>
+ <h1>💚 MULTIPLE CREEPER 💙</h1>
+ <div class="sub">32+ OFFLINE GAMES</div>
+</header>
+
+<div id="home">
+ <div class="panel">
+  <h2>🎮 CHOOSE YOUR MODE</h2>
+  <div class="modes">
+   <button onclick="startGame('single')">👤 Single Player</button>
+   <button onclick="startGame('two')">👥 Two Players</button>
+   <button onclick="startGame('computer')">🤖 VS Computer</button>
+  </div>
+ </div>
+
+ <div class="panel">
+  <h2>🏆 MINI GAMES</h2>
+  <div class="games" id="gameList"></div>
+ </div>
+</div>
+
+<div id="gameArea" class="panel">
+ <h2>⭕ TIC TAC TOE ❌</h2>
+ <div id="modeText"></div>
+ <div id="status">Player X ki baari</div>
+ <div class="board" id="board"></div>
+ <button onclick="resetGame()">🔄 Restart</button>
+ <button onclick="goHome()">🏠 Home</button>
+</div>
+
+<footer>💙 LIGHT BLUE + GREEN GAMING WORLD 💚</footer>
+
+<script>
+
+const gameNames=[
+["⭕","Tic Tac Toe"],["🏓","Ping Pong"],
+["🏎️","Racing"],["🐍","Snake"],
+["🧩","Puzzle"],["🏸","Air Hockey"],
+["🏀","Basketball"],["⚽","Football"],
+["🏐","Volleyball"],["🎯","Darts"],
+["🏹","Archery"],["🧱","Brick Breaker"],
+["🚀","Space Shooter"],["🧠","Memory Match"],
+["🎲","Dice"],["✊","Rock Paper Scissors"],
+["♟️","Chess"],["⚫","Checkers"],
+["🔢","2048"],["💣","Minesweeper"],
+["🟦","Color Match"],["🃏","Card Match"],
+["🏁","Speed Race"],["🪙","Coin Toss"],
+["🧮","Math Challenge"],["🎈","Balloon Pop"],
+["🧊","Block Puzzle"],["🔴","Connect Four"],
+["🛸","Space Run"],["🐸","Jump Game"],
+["🎨","Color Switch"],["🏆","Quick Tap"]
+];
+
+const list=document.getElementById("gameList");
+gameNames.forEach(([symbol,name],i)=>{
+ const d=document.createElement("div");
+ d.className="game";
+ d.innerHTML=`<div style="font-size:35px">${symbol}</div>
+ <div>${name}</div>
+ <small>${i===0?"PLAY NOW":"COMING SOON"}</small>`;
+ if(i===0)d.onclick=()=>startGame("single");
+ list.appendChild(d);
+});
+  
+
+let mode="single",cells=Array(9).fill(""),turn="X",playing=true;
+
+function startGame(m){
+ mode=m;cells=Array(9).fill("");turn="X";playing=true;
+ document.getElementById("home").style.display="none";
+ document.getElementById("gameArea").style.display="block";
+ document.getElementById("modeText").innerText=
+ m==="two"?"Two Players — Same Mobile":
+ m==="computer"?"You vs Computer":"Single Player — Practice";
+ draw();updateStatus();
+}
+function draw(){
+ const board=document.getElementById("board");
+ board.innerHTML="";
+ cells.forEach((v,i)=>{
+  const b=document.createElement("button");
+  b.className="cell";b.innerText=v;
+  b.onclick=()=>move(i);
+  b.disabled=!!v||!playing;
+  board.appendChild(b);
+ });
+}
+function move(i){
+ if(!playing||cells[i])return;
+ cells[i]=turn;
+ if(checkEnd())return;
+ turn=turn==="X"?"O":"X";
+ draw();updateStatus();
+ if(mode==="computer"&&turn==="O"&&playing){
+  setTimeout(computerMove,400);
+ }
+}
+function computerMove(){
+ if(!playing)return;
+ let empty=cells.map((v,i)=>v===""?i:-1).filter(i=>i!==-1);
+ if(!empty.length)return;
+ // Computer first tries to win, then block the player
+ let choice=-1;
+ for(let p of ["O","X"]){
+  for(let i of empty){
+   cells[i]=p;
+   if(winner(p)){choice=i;cells[i]="";break;}
+   cells[i]="";
+  }
+  if(choice!==-1)break;
+ }
+ if(choice===-1)choice=empty[Math.floor(Math.random()*empty.length)];
+ cells[choice]="O";
+ if(checkEnd())return;
+ turn="X";draw();updateStatus();
+}
+const lines=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+function winner(p){
+ return lines.some(line=>line.every(i=>cells[i]===p));
+}
+function checkEnd(){
+ if(winner(turn)){
+  document.getElementById("status").innerText=
+   (mode==="computer"&&turn==="O"?"Computer wins!":"Player "+turn+" wins! 🎉");
+  playing=false;draw();return true;
+ }
+ if(cells.every(v=>v)){
+  document.getElementById("status").innerText="It's a Draw! 🤝";
+  playing=false;draw();return true;
+ }
+ return false;
+}
+function updateStatus(){
+ document.getElementById("status").innerText=
+ mode==="computer"&&turn==="O"?"Computer ki baari 🤖":"Player "+turn+" ki baari";
+}
+function resetGame(){
+ cells=Array(9).fill("");turn="X";playing=true;draw();updateStatus();
+}
+function goHome(){
+ document.getElementById("gameArea").style.display="none";
+ document.getElementById("home").style.display="block";
+}
+</script>
+</body>
+</html>
